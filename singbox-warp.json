@@ -1,0 +1,174 @@
+{
+    "experimental": {
+        "clash_api": {
+            "external_controller": "127.0.0.1:9090",
+            "external_ui": ""
+        }
+    },
+    "log": {
+        "level": "info",
+        "timestamp": false
+    },
+    "dns": {
+        "servers": [
+            {
+                "tag": "dns_direct",
+                "address": "local",
+                "strategy": "prefer_ipv6",
+                "detour": "direct"
+            },
+            {
+                "tag": "dns_proxy",
+                "address": "tls://1.1.1.1",
+                "address_resolver": "dns_direct",
+                "strategy": "ipv4_only",
+                "detour": "proxy"
+            },
+            {
+                "tag": "dns_block",
+                "address": "rcode://success"
+            }
+        ],
+        "rules": [
+            {
+                "geosite": [
+                    "category-ads-all"
+                ],
+                "server": "dns_block",
+                "disable_cache": true
+            },
+            {
+                "geosite": [
+                    "category-games@cn"
+                ],
+                "server": "dns_direct"
+            },
+            {
+                "geosite": [
+                    "geolocation-!cn"
+                ],
+                "server": "dns_proxy"
+            },
+            {
+                "outbound": [
+                    "any"
+                ],
+                "server": "dns_direct"
+            }
+        ]
+    },
+    "inbounds": [
+        {
+            "type": "mixed",
+            "tag": "mixed-in",
+            "listen": "::",
+            "listen_port": 7890,
+            "set_system_proxy": true
+        }
+    ],
+    "outbounds": [
+        {
+            "type": "selector",
+            "tag": "proxy",
+            "outbounds": [
+                "auto",
+                "wg",
+                "warp官方"
+            ],
+            "default": "auto"
+        },
+        {
+            "type": "urltest",
+            "tag": "auto",
+            "outbounds": [
+                "wg",
+                "warp官方"
+            ],
+            "url": "https://www.gstatic.com/generate_204",
+            "interval": "1m",
+            "tolerance": 50
+        },
+        {
+            "type": "wireguard",
+            "tag": "wg",
+            "server": "162.159.195.141",
+            "server_port": 4500,
+            "local_address": [
+                "172.16.0.2/32",
+                "2606:4700:110:8acb:d276:5a18:72d2:51ca/128"
+            ],
+            "private_key": "0H6yPQydpiDl9alPz797ONFoD9zxIWrTxZiITpt1Y1w=",
+            "peer_public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+            "reserved": [
+                194,
+                38,
+                199
+            ],
+            "mtu": 1280
+        },
+        {
+            "type": "socks",
+            "tag": "warp官方",
+            "server": "127.0.0.1",
+            "server_port": 6789
+        },
+        {
+            "type": "direct",
+            "tag": "direct"
+        },
+        {
+            "type": "block",
+            "tag": "block"
+        },
+        {
+            "type": "dns",
+            "tag": "dns-out"
+        }
+    ],
+    "route": {
+        "geoip": {
+            "path": "geoip.db",
+            "download_url": "https://ghproxy.com/https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db",
+            "download_detour": "direct"
+        },
+        "geosite": {
+            "path": "geosite.db",
+            "download_url": "https://ghproxy.com/https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db",
+            "download_detour": "direct"
+        },
+        "rules": [
+            {
+                "geosite": "category-ads-all",
+                "outbound": "block"
+            },
+            {
+                "domain_keyword": [
+                    "qq.com",
+                    "hdslb.com",
+                    "bili"
+                ],
+                "outbound": "proxy"
+            },
+            {
+                "geosite": "cn",
+                "geoip": [
+                    "cn",
+                    "private"
+                ],
+                "outbound": "direct"
+            },
+			{
+                "domain_keyword": [
+					"hozonauto",
+					"feishu"
+                ],
+                "outbound": "direct"
+            },
+            {
+                "geosite": "geolocation-!cn",
+                "geoip": "!cn",
+                "outbound": "proxy"
+            }
+        ]
+    }
+}
